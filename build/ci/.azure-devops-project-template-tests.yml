@@ -1,0 +1,71 @@
+parameters:
+  vmImage: ''
+
+jobs:
+- job: Dotnet_Template_Tests
+
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+
+  dependsOn: VS_Latest
+
+#  strategy:
+#    matrix:
+#      xxx:
+#        flags: -uwp=false -android=false -wasm=false -macos=false -ios=false
+#      xxW:
+#        flags: -uwp=false -android=false -wasm=true  -macos=false -ios=false
+#      xAx:
+#        flags: -uwp=false -android=true  -wasm=false -macos=false -ios=false
+#      xAW:
+#        flags: -uwp=false -android=true  -wasm=true  -macos=false -ios=false
+#      Uxx:
+#        flags: -uwp=true  -android=false -wasm=false -macos=false -ios=false
+#      UxW:
+#        flags: -uwp=true  -android=false -wasm=true  -macos=false -ios=false
+#      UAx:
+#        flags: -uwp=true  -android=true  -wasm=false -macos=false -ios=false
+#      UAW:
+#        flags: -uwp=true  -android=true  -wasm=true  -macos=false -ios=false
+
+  steps:
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      artifactName: NugetPackages
+
+  - script: dotnet new -i $(System.ArtifactsDirectory)/vslatest/Uno.ProjectTemplates.Dotnet*.nupkg
+    displayName: Install Project Templates
+
+  - script: dotnet new unoapp -n UnoApp
+    displayName: Initialize Solution
+
+  - task: MSBuild@1
+    displayName: Build Solution
+    inputs:
+      solution: UnoApp/UnoApp.sln
+      msbuildLocationMethod: version
+      msbuildVersion: latest
+      msbuildArchitecture: x86
+      msbuildArguments: /r /p:Configuration=Release /detailedsummary
+      clean: false
+      maximumCpuCount: true
+      restoreNugetPackages: false
+      logProjectEvents: false
+      createLogFile: false
+
+  - script: dotnet new unoapp-winui -n UnoApp-WinUI
+    displayName: Initialize WinUI Solution
+
+  - task: MSBuild@1
+    displayName: Build WinUI Solution
+    inputs:
+      solution: UnoApp-WinUI/UnoApp-WinUI.sln
+      msbuildLocationMethod: version
+      msbuildVersion: latest
+      msbuildArchitecture: x86
+      msbuildArguments: /r /p:Configuration=Release /detailedsummary
+      clean: false
+      maximumCpuCount: true
+      restoreNugetPackages: false
+      logProjectEvents: false
+      createLogFile: false
